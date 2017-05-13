@@ -42,8 +42,10 @@ function _processImage(img, events) {
 			let x = faces[i];
 			img.ellipse(x.x + x.width/2, x.y + x.height/2, x.width/2, x.height/2);
 		}
-		if (faces.length > 0) {
+
+		events.emit('frameAvailable', { img: img.toBuffer(), faces: faces });
+		/*if (faces.length > 0) {
 			events.emit('detected', { img: img.toBuffer(), faces: faces });
-		}
+		}*/
 	});
 }
