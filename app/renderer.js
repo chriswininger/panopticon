@@ -1,6 +1,7 @@
 const FaceDetect = require('./faceDetect.js');
 const isDebugging = true;
 
+// eye.setAttributeNS(null, 'transform', 'translate(50, 0)')
 window.onload = function() {
 	const svgns = "http://www.w3.org/2000/svg";
 	const animationIncrement = 0.5;
@@ -15,6 +16,13 @@ window.onload = function() {
 		faces: [],
 		eyePosition: { x: 160, y: 120 }
 	};
+
+
+	var eySVG = document.getElementById('grpEyeBall')
+	undefined
+	var eyeSVG = document.getElementById('grpEyeBall')
+	undefined
+	eyeSVG.setAttributeNS(null, 'transform', 'translate(50, 0)')
 
 	const eyeSVG = document.createElementNS(svgns, 'circle');
 	eyeSVG.setAttributeNS(null, 'fill', '#1a7ae4');
