@@ -24,6 +24,9 @@ _.extend(FaceDetect.prototype, {
 		console.log('setup camera');
 		setInterval(function() {
 			camera.read(function(err, img) {
+				if (img.width() <= 0)
+					return;
+
 				if (err)
 					return console.error('error reading camera: ' + err);
 				_processImage(img, _self.events);
