@@ -17,7 +17,7 @@ function FaceDetect () {
 _.extend(FaceDetect.prototype, {
 	startDetectionLoop() {
 		const _self = this;
-		const camera = new cv.VideoCapture(0)
+		const camera = new cv.VideoCapture(1)
 
 		camera.setWidth(camWidth);
 		camera.setHeight(camHeigt);
