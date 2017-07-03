@@ -1,8 +1,8 @@
 module.exports = FaceDetect;
 
 const cv = require('opencv');
-const camWidth = 320;
-const camHeigt = 240;
+const camWidth = 640;
+const camHeigt = 480;
 const camFps = 10;
 const camInterval = 1000 /camFps;
 const identifierColor = [0, 255, 0];

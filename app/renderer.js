@@ -1,18 +1,19 @@
 const FaceDetect = require('./faceDetect.js');
 const MathHelpers = require('./MathHelpers.js');
-const isDebugging = false;
+const isDebugging = true;
 
 // eye.setAttributeNS(null, 'transform', 'translate(50, 0)')
 window.onload = function() {
 	let lastFace = null;
 	let lastFaceCount = 0;
+	let detectionCount = 0;
 	let searchMode = true;
 	let animationPhase = 1;
 	let eyeOffset = 0;
 
 	const svgns = "http://www.w3.org/2000/svg";
 	const animationIncrement = 0.5;
-	const cameraWdith = 320;
+	const cameraWdith = 640;
 	const detection = new FaceDetect();
 	const svgDisplay = document.getElementById('svgDisplay');
 	const svgWidth = svgDisplay.getBoundingClientRect().width;
@@ -20,6 +21,7 @@ window.onload = function() {
 	const svgHeight = svgDisplay.getBoundingClientRect().height;
 	const eyeBoundCenter = svgWidth / 2;
 	const eyeBoundX = svgWidth * 0.07; // restrict eye to 75% of outer width
+	const detectionThreshold = 10;
 
 	const display = document.getElementById('debugDisplay');
 	const ctx = display.getContext('2d');
@@ -46,7 +48,6 @@ window.onload = function() {
 	_draw();
 
 	function _draw() {
-		requestAnimationFrame(_draw);
 		// let eyeWidth = eyeSVG.getBBox().width;
 		let eyeX = eyeSVG.getBBox().x + eyeOffset;
 		let faceBasedOffset;
@@ -56,26 +57,48 @@ window.onload = function() {
 		if (state.faces && state.faces.length > 0) {
 			// searchMode = false;
 			let face = findClosestFace(state.faces);
+			if (lastFace) {
+				if (Math.abs(lastFace.width - face.width) > 15) {
+					// new face reset count
+					detectionCount = 0;
+				} else {
+					let faceX = face.width / 2 + face.x;
+					let lastFaceX = lastFace.width / 2 + face.x;
+
+					if (Math.abs(faceX - lastFaceX) > 200) {
+						// new face, reset count
+						detectionCount = 0;
+					}
+				}
+			}
+
 			lastFace = face;
 			currentFace = face;
 			faceBasedOffset = computeOffsetFromFace(currentFace);
 
-			if (eyeOffset === faceBasedOffset || (eyeOffset >= faceBasedOffset - 2 && eyeOffset <= faceBasedOffset + 2)) {
+			if ((eyeOffset === faceBasedOffset || eyeOffset >= (faceBasedOffset - 0.5) && eyeOffset <= (faceBasedOffset + 0.5))
+				&& detectionCount > detectionThreshold) {
 				// lock on follow the phase, we have intersected with it
 				animationPhase = 3;
-			} else if (eyeOffset < faceBasedOffset && animationPhase === 1) {
+			} else if (eyeOffset < faceBasedOffset && animationPhase === 1 && detectionCount > detectionThreshold) {
 				// switch direction, scan back toward face to left
 				animationPhase = 2;
-			} else if (eyeOffset < faceBasedOffset && animationPhase === 2) {
+			} else if (eyeOffset < faceBasedOffset && animationPhase === 2 && detectionCount > detectionThreshold) {
 				// track back right, eye is less than detected face
 				animationPhase = 1;
 			}
 
 			lastFaceCount = 0;
+			detectionCount++;
+
 			// updateFromFace(face);
-		} else if (lastFace && lastFaceCount < 30) {
+		} else if (lastFace && lastFaceCount < 150) {
 			// use the last detected face in case this is a momentary drop
 			lastFaceCount++;
+			if (detectionCount > 0) {
+				detectionCount--;
+			}
+
 			currentFace = lastFace;
 
 			faceBasedOffset = computeOffsetFromFace(currentFace);
@@ -90,10 +113,13 @@ window.onload = function() {
 			// return to center
 			if (animationPhase === 3)
 				animationPhase = 1;
+
+			detectionCount = 0;
 			// eyeSVG.setAttributeNS(null, 'transform', 'translate(0)');
 		}
 
 
+		// animationPhase = 3;
 		if (animationPhase === 1 && eyeX <= eyeBoundRight) {
 			eyeOffset += animationIncrement;
 		} else if (animationPhase === 1 && eyeX > eyeBoundRight) {
@@ -102,12 +128,13 @@ window.onload = function() {
 			eyeOffset -=animationIncrement;
 		} else if (animationPhase === 2 && eyeX < eyeBoundLeft) {
 			animationPhase = 1;
-
 		} else if (animationPhase === 3 && currentFace) {
-		 eyeOffset = faceBasedOffset;
+			eyeOffset = faceBasedOffset;
 		}
 
 		eyeSVG.setAttributeNS(null, 'transform', 'translate(' + eyeOffset + ')' );
+
+		requestAnimationFrame(_draw);
 	}
 
 	function findClosestFace(faces) {
